@@ -20,3 +20,8 @@ docker-compose exec php7 index.php lock
 ```bash
 docker-compose exec php7 index.php unlock
 ```
+
+## export
+```bash
+docker-compose exec php7 index.php etapa1 "/trunk/entregas/resumo-etapa1"
+```

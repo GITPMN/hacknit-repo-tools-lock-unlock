@@ -61,9 +61,8 @@ switch ($argv[1]) {
         }
         break;
     case 'etapa1':
-        $response = $client->request('GET', $baseUrl.'/user/repos?per_page=100&affiliation=owner');
-        $content = json_decode($response->getContent());
-        foreach ($content as $repo) {
+        $repos = json_decode(file_get_contents('dados.json'));
+        foreach ($repos as $repo) {
             if ($repo->fork) {
                 continue;
             }
@@ -75,7 +74,7 @@ switch ($argv[1]) {
             $client->request('PATCH', $baseUrl.'/repos/'.getenv('OWNER').'/'.$repo->name, [
                 'body' => json_encode(['private' => false])
             ]);
-            $command = 'svn export '.$repo->html_url.'/trunk/entregas/resumo-etapa1';
+            $command = 'svn export '.$repo->html_url.$argv[2];
             shell_exec($command);
             shell_exec('mv resumo-etapa1 '.$matches['name']);
             $client->request('PATCH', $baseUrl.'/repos/'.getenv('OWNER').'/'.$repo->name, [
