@@ -33,18 +33,18 @@ switch ($argv[1]) {
             if (!$matches) {
                 continue;
             }
-            
             $response = $client->request('GET', $baseUrl.'/repos/'.$repo->full_name.'/collaborators');
             $collaborators = json_decode($response->getContent());
             $data = [
-                'name' => $repo->name
+                'name' => $repo->name,
+                'html_url' => $repo->html_url
             ];
             foreach ($collaborators as $collaborator) {
-                if ($collaborator->login == 'GITPMN') {
+                if ($collaborator->login == getenv('OWNER')) {
                     continue;
                 }
                 $data['collaborators'][] = $collaborator->login;
-                $client->request('DELETE', $baseUrl.'/repos/GITPMN/'.$repo->name.'/collaborators/'.$collaborator->login);
+                $client->request('DELETE', $baseUrl.'/repos/'.getenv('OWNER').'/'.$repo->name.'/collaborators/'.$collaborator->login);
             }
             if (isset($data['collaborators'])) {
                 $repos[] = $data;
@@ -56,10 +56,36 @@ switch ($argv[1]) {
         $repos = json_decode(file_get_contents('dados.json'));
         foreach ($repos as $repo) {
             foreach ($repo->collaborators as $login) {
-                $client->request('PUT', $baseUrl.'/repos/GITPMN/'.$repo->name.'/collaborators/'.$login);
+                $client->request('PUT', $baseUrl.'/repos/'.getenv('OWNER').'/'.$repo->name.'/collaborators/'.$login);
             }
         }
         break;
     case 'etapa1':
+        $response = $client->request('GET', $baseUrl.'/user/repos?per_page=100&affiliation=owner');
+        $content = json_decode($response->getContent());
+        foreach ($content as $repo) {
+            if ($repo->fork) {
+                continue;
+            }
+            preg_match('/'.getenv('PREFIX').'(?<nome>.*)/', $repo->name, $matches);
+            if (!$matches) {
+                continue;
+            }
+            preg_match('/'.getenv('PREFIX').'(?<name>.*)/', $repo->name, $matches);
+            $client->request('PATCH', $baseUrl.'/repos/'.getenv('OWNER').'/'.$repo->name, [
+                'body' => json_encode(['private' => false])
+            ]);
+            $command = 'svn export '.$repo->html_url.'/trunk/entregas/resumo-etapa1';
+            shell_exec($command);
+            shell_exec('mv resumo-etapa1 '.$matches['name']);
+            $client->request('PATCH', $baseUrl.'/repos/'.getenv('OWNER').'/'.$repo->name, [
+                'body' => json_encode(['private' => true])
+            ]);
+        }
+        foreach ($repos as $repo) {
+            preg_match('/'.getenv('PREFIX').'(?<name>.*)/', $repo->name, $matches);
+            shell_exec('tar -czf '.$matches['name']. '.tar.gz '.$matches['name']);
+            shell_exec('rm -rf '.$matches['name']);
+        }
         break;
 }

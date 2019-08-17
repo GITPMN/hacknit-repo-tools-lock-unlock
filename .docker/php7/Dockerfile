@@ -5,7 +5,8 @@ RUN apt-get update
 RUN apt-get install -y \
         git \
         libpq-dev \
-        libzip-dev
+        libzip-dev \
+        subversion
 RUN docker-php-ext-install -j "$(nproc)" \
         zip
 
