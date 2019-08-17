@@ -1,0 +1,20 @@
+# composer dir and files
+vendor
+
+# IDE
+## Eclipse
+.buildpath
+.project
+.settings
+
+## VI
+*.swp
+
+## VSCode
+.vscode
+
+# settings
+.env
+
+*.json
+*.phar
